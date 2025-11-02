@@ -14,7 +14,7 @@ if (!API_KEY) {
     throw new Error("GEMINI_API_KEY environment variable is not set.");
 }
 const genAI = new GoogleGenerativeAI(API_KEY);
-const model = genAI.getGenerativeModel({ model: "gemini-1.0-pro" });
+const model = genAI.getGenerativeModel({ model: "gemini-2.0-flash" });
 
 
 // 3. Set up Middleware
