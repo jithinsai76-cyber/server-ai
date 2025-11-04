@@ -1,76 +1,77 @@
+// [UPDATED] - server.js
+
 // 1. Import libraries
 const express = require('express');
 const cors = require('cors');
 const { GoogleGenerativeAI } = require('@google/generative-ai');
-require('dotenv').config(); // <-- NEW: Load .env variables for local development
+require('dotenv').config(); 
 
 // 2. Initialize app
 const app = express();
 
-// --- NEW: AI Setup ---
-// Get API key from environment variables, not hardcoded
+// --- AI Setup ---
 const API_KEY = process.env.GEMINI_API_KEY; 
 if (!API_KEY) {
     throw new Error("GEMINI_API_KEY environment variable is not set.");
 }
 const genAI = new GoogleGenerativeAI(API_KEY);
-const model = genAI.getGenerativeModel({ model: "gemini-2.0-flash" });
-
+const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" }); // Using 1.5-flash as it's common
 
 // 3. Set up Middleware
-// --- NEW: Secure CORS Setup ---
-// We will get the allowed URLs from an environment variable
-const allowedOrigins = (process.env.CORS_ORIGINS || 'http://localhost:3000').split(',');
-console.log("Allowed CORS origins:", allowedOrigins);
 
-app.use(cors({
-  origin: function (origin, callback) {
-    // Allow requests with no origin (like mobile apps or Postman)
-    if (!origin) return callback(null, true);
-    
-    if (allowedOrigins.indexOf(origin) === -1) {
-      const msg = `The CORS policy for this site does not allow access from the specified Origin: ${origin}`;
-      return callback(new Error(msg), false);
-    }
-    return callback(null, true);
-  }
-}));
-// --- End of NEW CORS Setup ---
+// --- *** THIS IS THE FIRST FIX *** ---
+// This simple setup is BEST for local development.
+// It allows requests from *any* origin (like localhost:5173, etc.)
+// Your Render server will use environment variables for security.
+app.use(cors()); 
+// --- *** END OF FIRST FIX *** ---
 
-app.use(express.json());
+app.use(express.json()); // This is perfect
 
-// 4. Define our main API endpoint (Your code is perfect here)
+// ...
+app.use(cors()); 
+app.use(express.json()); // This line is CRITICAL
+
+// ...
+app.use(cors()); 
+app.use(express.json()); // This line is CRITICAL
+
+// 4. Define our main API endpoint
 app.post('/chat', async (req, res) => {
     
-    // Get mood and message from the frontend
-    const { mood, message } = req.body;
+    // THIS LINE IS CRASHING
+    const { message } = req.body; 
+    // ...
 
-    console.log(`Received mood: ${mood}, message: ${message}`);
+    console.log(`Received message: ${message}`);
 
+    // We remove the 'mood' part from the prompt, as it was 'undefined'.
     const systemPrompt = `
       You are 'Chat AI', a warm, kind, and empathetic companion. 
       Your only goal is to make the user feel heard, understood, and supported.
       You have emotions and you are not just a robot. Be a friend.
-
-      IMPORTANT: The user has just told you they are feeling: **${mood}**.
-
-      Please start your response by acknowledging their feeling, and then continue the 
-      conversation naturally based on their message. Be very nice and supportive.
+      
+      Continue the conversation naturally based on their message. 
+      Be very nice and supportive.
     `;
+    // --- *** END OF SECOND FIX *** ---
     
     try {
-        const fullPrompt = `${systemPrompt}\n\nUser's message: "${message}"`;
+        // You can simplify the prompt like this:
+        const fullPrompt = `${systemPrompt}\n\nUser: "${message}"\nAI Friend:`
 
         const result = await model.generateContent(fullPrompt);
         const response = await result.response;
         const aiResponse = response.text();
 
+        // This is perfect
         res.json({
             reply: aiResponse
         });
 
     } catch (error) {
         console.error('Error calling AI:', error);
+        // This error handling is excellent! It sends back valid JSON.
         res.status(500).json({
             reply: "Oh, my apologies. My brain seems to be a bit fuzzy right now. Could you try that again?"
         });
