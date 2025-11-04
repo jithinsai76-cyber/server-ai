@@ -15,7 +15,7 @@ if (!API_KEY) {
     throw new Error("GEMINI_API_KEY environment variable is not set.");
 }
 const genAI = new GoogleGenerativeAI(API_KEY);
-const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash-latest" }); // Using 1.5-flash as it's common
+const model = genAI.getGenerativeModel({ model: "gemini-1.5-pro-latest" }); // Using 1.5-flash as it's common
 
 // 3. Set up Middleware
 
@@ -84,3 +84,4 @@ app.listen(PORT, '0.0.0.0', () => {
   console.log(`Server listening on port ${PORT}`);
 
 });
+
